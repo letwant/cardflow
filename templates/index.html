@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>身份证识别系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-section {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .preview-section {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-container {
+            flex: 1;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .result-section {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>身份证识别系统</h1>
+
+        <div class="upload-section">
+            <h2>上传身份证照片</h2>
+            <input type="file" id="fileInput" accept="image/*">
+            <button id="uploadBtn">上传并识别</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在处理中，请稍候...</p>
+        </div>
+
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <div class="image-container">
+                <h3>原始照片</h3>
+                <img id="originalImage" src="" alt="原始照片">
+            </div>
+            <div class="image-container">
+                <h3>矫正后照片</h3>
+                <img id="correctedImage" src="" alt="矫正后照片">
+            </div>
+        </div>
+
+        <div class="result-section" id="resultSection" style="display: none;">
+            <h2>识别结果</h2>
+            <table>
+                <tr>
+                    <th>字段</th>
+                    <th>值</th>
+                </tr>
+                <tr>
+                    <td>姓名</td>
+                    <td id="name">-</td>
+                </tr>
+                <tr>
+                    <td>性别</td>
+                    <td id="gender">-</td>
+                </tr>
+                <tr>
+                    <td>民族</td>
+                    <td id="ethnicity">-</td>
+                </tr>
+                <tr>
+                    <td>出生</td>
+                    <td id="birth">-</td>
+                </tr>
+                <tr>
+                    <td>住址</td>
+                    <td id="address">-</td>
+                </tr>
+                <tr>
+                    <td>公民身份号码</td>
+                    <td id="idNumber">-</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadBtn').addEventListener('click', function() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('请先选择文件');
+                return;
+            }
+
+            // 显示加载动画
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('previewSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应不正常');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // 显示图片和结果
+                document.getElementById('originalImage').src = 'data:image/jpeg;base64,' + data.original_image;
+                document.getElementById('correctedImage').src = 'data:image/jpeg;base64,' + data.corrected_image;
+
+                // 填充识别结果
+                document.getElementById('name').textContent = data.ocr_result.姓名 || '未识别到';
+                document.getElementById('gender').textContent = data.ocr_result.性别 || '未识别到';
+                document.getElementById('ethnicity').textContent = data.ocr_result.民族 || '未识别到';
+                document.getElementById('birth').textContent = data.ocr_result.出生 || '未识别到';
+                document.getElementById('address').textContent = data.ocr_result.住址 || '未识别到';
+                document.getElementById('idNumber').textContent = data.ocr_result.公民身份号码 || '未识别到';
+
+                // 显示结果区域
+                document.getElementById('previewSection').style.display = 'flex';
+                document.getElementById('resultSection').style.display = 'block';
+            })
+            .catch(error => {
+                alert('处理失败: ' + error.message);
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                document.getElementById('loading').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
