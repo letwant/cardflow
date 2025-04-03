@@ -30,7 +30,17 @@ def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/', methods=['GET', 'POST'])
+# 主框架路由
+@app.route('/')
+def index():
+    return render_template('layout.html')
+
+# 身份证识别页面路由
+@app.route('/id-card')
+def id_card_page():
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    return render_template('id_card.html', ajax_request=is_ajax)
+@app.route('/id-card/process', methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
         # 检查是否有文件上传
@@ -83,6 +93,24 @@ def upload_file():
                 return jsonify({'error': str(e)}), 500
 
     return render_template('index.html')
+
+
+# 其他功能页面的路由可以在这里添加
+@app.route('/photo-gen')
+def photo_gen_page():
+    return "<h1>证件照生成功能开发中</h1>"
+
+@app.route('/face-compare')
+def face_compare_page():
+    return "<h1>人脸比对功能开发中</h1>"
+
+@app.route('/liveness')
+def liveness_page():
+    return "<h1>活体检测功能开发中</h1>"
+
+@app.route('/face-db')
+def face_db_page():
+    return "<h1>人脸数据库功能开发中</h1>"
 
 if __name__ == '__main__':
     app.run(debug=True)

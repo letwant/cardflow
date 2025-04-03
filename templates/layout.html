@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>证照处理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+        }
+
+        .sidebar {
+            width: 220px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100%;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: #34495e;
+        }
+
+        .sidebar-menu li.active {
+            background-color: #3498db;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 220px;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .content-area {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+<!-- 左侧导航菜单 -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h2>证照处理系统</h2>
+    </div>
+    <ul class="sidebar-menu">
+        <li class="active" data-page="id-card">身份证识别</li>
+        <li data-page="photo-gen">证件照生成</li>
+        <li data-page="face-compare">人脸比对</li>
+        <li data-page="liveness">活体检测</li>
+        <li data-page="face-db">人脸数据库</li>
+    </ul>
+</div>
+
+<!-- 主内容区域 -->
+<div class="main-content">
+    <div class="header">
+        <h1 id="page-title">身份证识别</h1>
+    </div>
+    <div class="content-area" id="content-area">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<script>
+    // 导航菜单点击事件
+    document.querySelectorAll('.sidebar-menu li').forEach(item => {
+        item.addEventListener('click', function () {
+            // 移除原有active状态
+            document.querySelectorAll('.sidebar-menu li').forEach(li => {
+                li.classList.remove('active');
+            });
+            this.classList.add('active');
+
+            // 更新页面标题
+            document.getElementById('page-title').textContent = this.textContent;
+
+            // 添加AJAX请求头
+            fetch(`/${this.dataset.page}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.text())
+                .then(html => {
+                    const container = document.getElementById('content-area');
+                    container.innerHTML = html;
+
+                    // 新增：手动执行加载内容中的script
+                    const scripts = container.getElementsByTagName('script');
+                    for (let script of scripts) {
+                        if (script.src) {
+                            // 外部脚本
+                            const newScript = document.createElement('script');
+                            newScript.src = script.src;
+                            document.body.appendChild(newScript);
+                        } else {
+                            // 内联脚本
+                            eval(script.innerHTML);
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+</body>
+</html>

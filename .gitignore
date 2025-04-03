@@ -1,2 +1,4 @@
 .venv
 .idea
+static/uploads
+*/__pycache__

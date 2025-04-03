@@ -28,13 +28,13 @@ class OCRProcessor:
     @staticmethod
     def _extract_info_from_ocr(ocr_data_list):
         """从OCR结果中提取结构化信息（私有方法）"""
-        print("ocr_data_list", ocr_data_list)
         # 合并数组为字符串并预处理OCR错误
         merged_text = ((''.join(ocr_data_list).replace('民旅', '民族')
                        .replace('佳址', '住址')).replace('手用','出生')
-                       .replace('性系','性别').replace('性址', '住址'))
+                       .replace('性系','性别').replace('性址', '住址')
+                       .replace('性刷', '性别'))
+        print('merged_text=', merged_text)
         # 定义正则表达式模式（包含对OCR错误的容错）
-        print(merged_text)
         patterns = {
             '姓名': r'姓名(.*?)(?=性别|民族|出生|住址|公民身份号码|$)',
             '性别': r'性别([男女])|性([男女])|性[^别]{0,3}([男女])',
