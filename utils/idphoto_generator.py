@@ -31,7 +31,7 @@ class IdPhotoGenerator:
             )
 
             # 加载dlib特征点检测器
-            dlib_model_path = "../models/shape_predictor_68_face_landmarks.dat"
+            dlib_model_path = "models/shape_predictor_68_face_landmarks.dat"
             if not os.path.exists(dlib_model_path):
                 raise FileNotFoundError(f"dlib模型文件 {dlib_model_path} 未找到")
             self.predictor = dlib.shape_predictor(dlib_model_path)
@@ -203,17 +203,18 @@ class IdPhotoGenerator:
             jpg_image = self._prepare_jpg_image(id_photo)
 
             # 保存到当前目录
-            output_filename = f"id_photo_{uuid.uuid4().hex}.jpg"
-            output_path = os.path.join(os.getcwd(), output_filename)
-            jpg_image.save(output_path, "JPEG", quality=self.jpg_quality, optimize=True)
+            # output_filename = f"id_photo_{uuid.uuid4().hex}.jpg"
+            # output_path = os.path.join(os.getcwd(), output_filename)
+            # jpg_image.save(output_path, "JPEG", quality=self.jpg_quality, optimize=True)
 
             # 生成base64
             buffered = BytesIO()
             jpg_image.save(buffered, format="JPEG", quality=self.jpg_quality)
             base64_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-            result["data"] = base64_str
-            result["info"] = f"证件照已生成并保存至: {output_path}"
+            result["original_image"] = input_data
+            result["processed_image"] = base64_str
+            # result["info"] = f"证件照已生成并保存至: {output_path}"
         except Exception as e:
             result.update({"code": 500, "info": f"处理失败: {str(e)}"})
 

@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
 from utils.ocr_processor import OCRProcessor
 from utils.idcard_processor import IDCardProcessor
+from utils.idphoto_generator import IdPhotoGenerator
 import cv2
 import base64
 import torch
@@ -25,7 +26,7 @@ id_processor = IDCardProcessor(
 )
 
 ocr_processor = OCRProcessor(use_angle_cls=True, lang='ch')
-
+photo_generator = IdPhotoGenerator()
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -91,14 +92,38 @@ def upload_file():
 
             except Exception as e:
                 return jsonify({'error': str(e)}), 500
-
-    return render_template('index.html')
+    return render_template('layout.html')
 
 
 # 其他功能页面的路由可以在这里添加
 @app.route('/photo-gen')
 def photo_gen_page():
-    return "<h1>证件照生成功能开发中</h1>"
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    return render_template('photo-gen.html', ajax_request=is_ajax)
+
+@app.route('/id-photo/process', methods=['GET', 'POST'])
+def photo_gen_process():
+    if request.method == 'POST':
+        # 检查是否有文件上传
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
+
+        file = request.files['file']
+
+        # 检查是否选择了文件
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        if file and allowed_file(file.filename):
+            try:
+                file_data = file.read()
+                base64_data = base64.b64encode(file_data).decode('utf-8')
+                # 生成证件照
+                result = photo_generator.generate(base64_data, is_base64=True)
+                return jsonify(result)
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+    return render_template('layout.html')
 
 @app.route('/face-compare')
 def face_compare_page():
